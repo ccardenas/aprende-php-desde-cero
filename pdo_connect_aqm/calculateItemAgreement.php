@@ -32,7 +32,7 @@ $query = "
 	WHERE
 	    pi.discardedForPo = 0
 	    AND pi.status IN ('accepted', 'parcial')
-	    AND pi.id = 501066
+	    AND pi.id = 451887
 	GROUP BY 
 	    pi.id";
 
@@ -77,11 +77,13 @@ if ($resultQuery['proposalItemQuantity'] > $resultQuery['purchaseOrderItemQuanti
     //Calculo comisión precio ofertado/adjudicado
     //Monto a calcular
     $amount = 12000000000.000000; // (float) $resultQuery['totalPricePaid'];
+    $tmpCommissionReal = 0;
     //Calculo de comisión
     if ($resultQuery['productType'] == 'S') {
         //Calculo comisión por servicio
         $tmpCommission = $amount * $limitPerItemService['commission'];
         if ($tmpCommission > $limitPerBid) {
+            $tmpCommissionReal = $tmpCommission;
             $tmpCommission = $limitPerBid;
             $tmpCommissionPercentage = 100 * $tmpCommission / $amount;
         } else {
@@ -93,9 +95,10 @@ if ($resultQuery['proposalItemQuantity'] > $resultQuery['purchaseOrderItemQuanti
         if ($tmpCommission > $limitPerItemGood[0]['limit']) {
             $criticalPoint = $limitPerItemGood[0]['limit'] / $limitPerItemGood[0]['commission'];
             $tmpCommission = $limitPerItemGood[0]['limit'] + ($amount - $criticalPoint) * $limitPerItemGood[1]['commission'];
-            /* if ($tmpCommission > $limitPerItemGood[1]['limit']) {
+            if ($tmpCommission > $limitPerItemGood[1]['limit']) {
+                $tmpCommissionReal = $tmpCommission;
                 $tmpCommission = $limitPerItemGood[1]['limit'];
-            } */
+            }
             $tmpCommissionPercentage = 100 * $tmpCommission / $amount;
         } else {
             $tmpCommissionPercentage = $limitPerItemGood[0]['commission'] * 100;
@@ -103,14 +106,47 @@ if ($resultQuery['proposalItemQuantity'] > $resultQuery['purchaseOrderItemQuanti
     }
 
     //Se trae solo las por convenio
-    switch ($resultQuery['productType']) {
-        case 'B':
-            if ($tmpCommission > $topeBien) {
-                print_r($resultQuery);
+    if ($resultQuery['productType'] == 'B' && $tmpCommissionReal > $topeBien) {
+        print_r(
+            [
+                'resultado' => 'B',
+                'array' => $resultQuery,
+                'commission' => $tmpCommission,
+                'commissionReal' => $tmpCommissionReal
+            ]
+        );
+    } elseif ($tmpCommissionReal > $topeBien) {
+        print_r(
+            [
+                'resultado' => 'S',
+                'array' => $resultQuery,
+                'commission' => $tmpCommission,
+                'commissionReal' => $tmpCommissionReal
+            ]
+        );
+    }
+    /*switch ($resultQuery['productType']) {
+        case "B":
+            if ($tmpCommissionReal > $topeBien) {
+                print_r(
+                    [
+                        'resultado' => 'B',
+                        'array' => $resultQuery,
+                        'commission' => $tmpCommission,
+                        'commissionReal' => $tmpCommissionReal
+                    ]
+                );
             }
         case 'S':
-            if ($tmpCommission > $topeServicio) {
-                print_r($resultQuery);
+            if ($tmpCommissionReal > $topeServicio) {
+                print_r(
+                    [
+                        'resultado' => 'S',
+                        'array' => $resultQuery,
+                        'commission' => $tmpCommission,
+                        'commissionReal' => $tmpCommissionReal
+                    ]
+                );
             }
         default:
             print_r(
@@ -121,7 +157,7 @@ if ($resultQuery['proposalItemQuantity'] > $resultQuery['purchaseOrderItemQuanti
                 ]
             );
             break;
-    }
+    } */
 } else {
     print_r(
         [
