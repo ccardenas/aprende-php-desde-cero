@@ -115,7 +115,7 @@ if ($resultQuery['proposalItemQuantity'] > $resultQuery['purchaseOrderItemQuanti
                 'commissionReal' => $tmpCommissionReal
             ]
         );
-    } elseif ($tmpCommissionReal > $topeBien) {
+    } elseif ($resultQuery['productType'] == 'S' && $tmpCommissionReal > $topeBien) {
         print_r(
             [
                 'resultado' => 'S',
